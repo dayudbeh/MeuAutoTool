@@ -1,14 +1,11 @@
 #include <pl/Mod.hpp>
 #include <pl/memory/Hook.hpp>
 #include <pl/memory/Signature.hpp>
-#include <pl/log/Logger.hpp>
 #include <vector>
 #include <string>
 
-// --- ASSINATURAS EXTRAÍDAS DO MOD ORIGINAL ---
+// Assinatura extraída do mod original para troca de slot
 constexpr const char* SIG_INVENTORY_SELECT = "?? ?? ?? D1 ?? ?? ?? A9 ?? ?? ?? A9 ?? ?? ?? A9 ?? ?? ?? A9 ?? ?? ?? A9 ?? ?? ?? A9 ?? ?? ?? 91 5B D0 3B D5 F3 03 08 AA F5 03 02 2A";
-// Usaremos as assinaturas nativas do SDK do Preloader para as funções base se as do mod falharem
-// (O preloader já tem um dicionário interno para as funções mais comuns)
 
 class AutoToolMod {
 public:
@@ -17,36 +14,44 @@ public:
         return inst;
     }
 
+    // O construtor precisa salvar a referência do mod atual
+    AutoToolMod() : mSelf(*pl::mod::NativeMod::current()) {}
+
     bool load() {
-        auto& self = pl::mod::NativeMod::current();
-        self.getLogger().info("AutoTool carregado!");
+        auto& logger = mSelf.getLogger();
+        logger.info("AutoTool carregado com sucesso!");
         return true;
     }
 
     bool enable() {
-        auto& logger = pl::mod::NativeMod::current().getLogger();
+        auto& logger = mSelf.getLogger();
         
-        // 1. Resolve a assinatura para trocar o slot do inventário
+        // Tenta encontrar a função de troca de slot no binário do Minecraft
         uintptr_t addrSelectSlot = pl::memory::resolveSignature(SIG_INVENTORY_SELECT, "libminecraftpe.so");
-        if (addrSelectSlot) {
-            logger.info("InventorySelectSlot encontrada em: {:#x}", addrSelectSlot);
-            // Aqui futuramente faríamos o hook nela
+        
+        if (addrSelectSlot != 0) {
+            logger.info("InventorySelectSlot encontrada no endereco: {:#x}", addrSelectSlot);
+            // Na proxima versao, instalaremos o hook aqui
         } else {
-            logger.warn("InventorySelectSlot não encontrada. O mod pode não funcionar.");
+            logger.warn("InventorySelectSlot NAO encontrada. Verifique a versao do jogo.");
         }
 
-        logger.info("AutoTool pronto para uso.");
+        logger.info("AutoTool ativado e pronto para uso.");
         return true;
     }
 
     bool disable() {
-        pl::mod::NativeMod::current().getLogger().info("AutoTool desligado.");
+        mSelf.getLogger().info("AutoTool desativado.");
         return true;
     }
 
     bool unload() {
         return true;
     }
+
+private:
+    pl::mod::NativeMod& mSelf;
 };
 
+// Registra o mod no Preloader
 PL_REGISTER_MOD(AutoToolMod, AutoToolMod::instance())
