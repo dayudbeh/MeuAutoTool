@@ -1,2 +1,0 @@
-# MeuAutoTool
-a test
