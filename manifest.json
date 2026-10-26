@@ -1,0 +1,7 @@
+{
+  "type": "preload-native",
+  "name": "Meu AutoTool",
+  "author": "davi72367",
+  "version": "1.0.0",
+  "entry": "libMeuAutoTool.so"
+}
